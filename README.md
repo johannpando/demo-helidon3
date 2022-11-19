@@ -1,3 +1,9 @@
+# minikube-docker-notes johannpando
+
+Microservices made with Helidon 3 MP.
+
+The file minikube-docker-notes include information about how build the image with minikube's docker and deploy on kubernetes through minikube and kubectl.
+
 # demo-helidon3
 
 Minimal Helidon MP project suitable to start from scratch.
