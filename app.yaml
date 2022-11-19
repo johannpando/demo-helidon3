@@ -1,0 +1,42 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: demo-helidon3
+  labels:
+    app: demo-helidon3
+spec:
+  type: NodePort
+  selector:
+    app: demo-helidon3
+  ports:
+  - port: 38080
+    targetPort: 8080
+    name: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-helidon3
+  labels:
+    app: demo-helidon3
+spec:
+  selector:
+    matchLabels:
+      octopusexport: OctopusExport
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: demo-helidon3
+        octopusexport: OctopusExport
+    spec:
+      containers:
+        - name: demo-helidon3
+          image: jpandode/demo-helidon3
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP

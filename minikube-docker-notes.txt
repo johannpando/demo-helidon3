@@ -1,0 +1,112 @@
+Minikube should be started, otherwise start it in the following way:
+
+minikube start
+
+Next, apply the app.yaml (manifest) file:
+
+kubectl apply -f app.yaml
+
+The next thing we do is try to see if the service is up.
+
+kubectl get svc
+
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+demo-helidon3   ClusterIP   10.102.250.29   <none>        8080/TCP   111m
+kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP    46h
+
+Now, we try to see if the pod is up.
+
+kubectl get pods
+
+NAME                             READY   STATUS             RESTARTS   AGE
+demo-helidon3-78894c6f54-ns6fk   0/1     ImagePullBackOff   0          118m
+
+But, we found the error: ImagePullBackOff
+
+The trouble is that we build the image on docker engine of my computer and not on the minikube's docker.
+
+In order to fix the problem we need to access to minikube's docker environment
+
+minikube docker-env
+
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.49.2:2376"
+export DOCKER_CERT_PATH="/home/jpandode/.minikube/certs"
+export MINIKUBE_ACTIVE_DOCKERD="minikube"
+
+# To point your shell to minikube's docker-daemon, run:
+# eval $(minikube -p minikube docker-env)
+
+So, we run the next command:
+
+eval $(minikube -p minikube docker-env)
+
+Now, we are in minikube's docker. We need build the image:
+
+docker build -t jpandode/demo-helidon3 .
+
+The next thing we do is change the pull policy in the manifest.
+
+imagePullPolicy: Never
+
+And we apply tha manifest again.:
+
+kubectl apply -f app.yaml
+
+We view the pods again
+
+kubectl get pods
+
+NAME                             READY   STATUS    RESTARTS   AGE
+demo-helidon3-78979d95c9-wsd6q   1/1     Running   0          75s
+
+We view the services again:
+
+kubectl get pods
+
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+demo-helidon3   ClusterIP   10.105.87.231   <none>        8080/TCP   3m3s
+kubernetes      ClusterIP   10.96.0.1       <none>        443/TCP    47h
+
+Note: If we made a change on the manifest file, we need apply the changes with the kubectl's command.
+
+The next step is get the services's url:
+
+minikube service demo-helidon3 --url
+http://192.168.49.2:30928
+
+In order to view the pod in a terminal, we need execute the next command:
+
+kubectl exec --stdin --tty demo-helidon3-78979d95c9-wsd6q -- /bin/bash
+
+root@demo-helidon3-78979d95c9-wsd6q:/helidon/libs# exit
+exit
+
+Now, we made a few changes in the source code.
+
+We proof the changes in the local environment.
+
+It's ok, we can view the changes.
+
+To can view the changes in the kubernetes through minikube, we need re-build the image.
+
+docker build -t jpandode/demo-helidon3 .
+
+We delete the manifest file
+
+kubectl delete -f app.yaml
+
+Next, we apply the manifest file:
+
+kubectl apply -f app.yaml
+
+We verify that server is up:
+
+kubectl logs demo-helidon3-78979d95c9-9l2jn
+
+We need the services' url again
+
+minikube service demo-helidon3 --url
+
+Note: If you do not see the changes in the mini-cube environment,
+make sure you are inside the mini-cube, and re-build the image, delete and apply the manifest and get the new url.
